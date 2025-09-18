@@ -11,6 +11,7 @@ import NotFound from "./pages/NotFound";
 import MainLayout from "@/components/layout/MainLayout";
 import Placeholder from "@/pages/Placeholder";
 import PostRide from "@/pages/PostRide";
+import Login from "@/pages/Login";
 
 const queryClient = new QueryClient();
 
