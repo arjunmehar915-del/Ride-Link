@@ -27,7 +27,7 @@ const App = () => (
             <Route path="/post-ride" element={<PostRide />} />
             <Route path="/safety" element={<Placeholder title="Safety" />} />
             <Route path="/about" element={<Placeholder title="About" />} />
-            <Route path="/login" element={<Placeholder title="Log in" />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Placeholder title="Sign up" />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
