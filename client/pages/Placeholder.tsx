@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 
 export default function Placeholder({ title }: { title?: string }) {
   const location = useLocation();
-  const label = title ?? location.pathname.replace("/", "").replace(/-/g, " ") || "Page";
+  const routeLabel = location.pathname.replace("/", "").replace(/-/g, " ");
+  const label = (title ?? routeLabel) || "Page";
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
