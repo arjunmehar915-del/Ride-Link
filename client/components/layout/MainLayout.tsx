@@ -70,11 +70,11 @@ function Header() {
           )}
           {auth && (
             <div className="flex items-center gap-2">
-              <div className="hidden items-center gap-2 rounded-md border px-3 py-1.5 text-sm md:inline-flex">
+              <Link to="/account" className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
                 <User2 className="h-4 w-4" />
                 <span className="font-medium">{auth.name}</span>
                 <span className="text-muted-foreground">• {auth.role}</span>
-              </div>
+              </Link>
               <Button variant="outline" className="gap-2" onClick={logout}><LogOut className="h-4 w-4"/>Logout</Button>
             </div>
           )}
