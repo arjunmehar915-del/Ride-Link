@@ -6,7 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { toast } from "sonner";
 
 const baseSchema = z.object({
@@ -29,7 +33,12 @@ function useOtp(phone: string) {
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef<number | null>(null);
 
-  useEffect(() => () => { if (timerRef.current) window.clearInterval(timerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current) window.clearInterval(timerRef.current);
+    },
+    [],
+  );
 
   const send = () => {
     if (!phone) return;
@@ -37,8 +46,13 @@ function useOtp(phone: string) {
     setSentCode(code);
     setSeconds(30);
     if (timerRef.current) window.clearInterval(timerRef.current);
-    timerRef.current = window.setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
-    toast.success("OTP sent", { description: `+91 ${phone} • Demo code: ${code}` });
+    timerRef.current = window.setInterval(
+      () => setSeconds((s) => (s > 0 ? s - 1 : 0)),
+      1000,
+    );
+    toast.success("OTP sent", {
+      description: `+91 ${phone} • Demo code: ${code}`,
+    });
   };
 
   const verify = (value: string) => value === sentCode;
@@ -49,13 +63,26 @@ function useOtp(phone: string) {
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const step = (searchParams.get("step") as "register" | "role" | "rider-kyc") || "register";
+  const step =
+    (searchParams.get("step") as "register" | "role" | "rider-kyc") ||
+    "register";
 
-  const [registration, setRegistration] = useState<RegistrationValues | null>(() => {
-    try { return JSON.parse(localStorage.getItem("ridelink:registration") || "null"); } catch { return null; }
+  const [registration, setRegistration] = useState<RegistrationValues | null>(
+    () => {
+      try {
+        return JSON.parse(
+          localStorage.getItem("ridelink:registration") || "null",
+        );
+      } catch {
+        return null;
+      }
+    },
+  );
+
+  const form = useForm<RegistrationValues>({
+    resolver: zodResolver(baseSchema),
+    defaultValues: { name: "", phone: "", email: "", otp: "" },
   });
-
-  const form = useForm<RegistrationValues>({ resolver: zodResolver(baseSchema), defaultValues: { name: "", phone: "", email: "", otp: "" } });
   const otp = useOtp(form.watch("phone"));
 
   useEffect(() => {
@@ -64,10 +91,14 @@ export default function Login() {
     }
   }, [step, registration, setSearchParams]);
 
-  const go = (next: "register" | "role" | "rider-kyc") => setSearchParams({ step: next });
+  const go = (next: "register" | "role" | "rider-kyc") =>
+    setSearchParams({ step: next });
 
   const onRegister = form.handleSubmit((data) => {
-    if (!otp.verify(data.otp)) { toast.error("Invalid OTP"); return; }
+    if (!otp.verify(data.otp)) {
+      toast.error("Invalid OTP");
+      return;
+    }
     setRegistration(data);
     localStorage.setItem("ridelink:registration", JSON.stringify(data));
     toast.success("Verified");
@@ -76,7 +107,15 @@ export default function Login() {
 
   const choosePassenger = () => {
     if (!registration) return;
-    localStorage.setItem("ridelink:auth", JSON.stringify({ role: "user", name: registration.name, phone: registration.phone, email: registration.email }));
+    localStorage.setItem(
+      "ridelink:auth",
+      JSON.stringify({
+        role: "user",
+        name: registration.name,
+        phone: registration.phone,
+        email: registration.email,
+      }),
+    );
     localStorage.removeItem("ridelink:registration");
     toast.success("Signed in as passenger");
     navigate("/");
@@ -85,8 +124,24 @@ export default function Login() {
   const [docs, setDocs] = useState<RiderDocs>({});
   const onRiderKyc = () => {
     if (!registration) return;
-    if (!docs.license || !docs.rc || !docs.aadhaar) { toast.error("Please upload Licence, RC and Aadhaar"); return; }
-    localStorage.setItem("ridelink:auth", JSON.stringify({ role: "rider", name: registration.name, phone: registration.phone, email: registration.email, docs: { license: (docs.license as File).name, rc: (docs.rc as File).name, aadhaar: (docs.aadhaar as File).name } }));
+    if (!docs.license || !docs.rc || !docs.aadhaar) {
+      toast.error("Please upload Licence, RC and Aadhaar");
+      return;
+    }
+    localStorage.setItem(
+      "ridelink:auth",
+      JSON.stringify({
+        role: "rider",
+        name: registration.name,
+        phone: registration.phone,
+        email: registration.email,
+        docs: {
+          license: (docs.license as File).name,
+          rc: (docs.rc as File).name,
+          aadhaar: (docs.aadhaar as File).name,
+        },
+      }),
+    );
     localStorage.removeItem("ridelink:registration");
     toast.success("Rider verified");
     navigate("/");
@@ -103,16 +158,34 @@ export default function Login() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg border p-5">
                 <h3 className="text-lg font-semibold">Passenger</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Request rides instantly and pay per seat.</p>
-                <Button className="mt-4 w-full" onClick={choosePassenger}>Continue as passenger</Button>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Request rides instantly and pay per seat.
+                </p>
+                <Button className="mt-4 w-full" onClick={choosePassenger}>
+                  Continue as passenger
+                </Button>
               </div>
               <div className="rounded-lg border p-5">
                 <h3 className="text-lg font-semibold">Rider</h3>
-                <p className="mt-1 text-sm text-muted-foreground">Offer rides and earn. KYC required.</p>
-                <Button className="mt-4 w-full" variant="outline" onClick={() => go("rider-kyc")}>Continue as rider</Button>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Offer rides and earn. KYC required.
+                </p>
+                <Button
+                  className="mt-4 w-full"
+                  variant="outline"
+                  onClick={() => go("rider-kyc")}
+                >
+                  Continue as rider
+                </Button>
               </div>
             </div>
-            <Button variant="ghost" className="mt-6" onClick={() => go("register")}>Back</Button>
+            <Button
+              variant="ghost"
+              className="mt-6"
+              onClick={() => go("register")}
+            >
+              Back
+            </Button>
           </CardContent>
         </Card>
       </section>
@@ -129,21 +202,59 @@ export default function Login() {
           <CardContent>
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="mb-1 block text-sm font-medium">Licence</label>
-                <Input type="file" accept="image/*,application/pdf" onChange={(e)=>setDocs((d)=>({ ...d, license: e.target.files?.[0] || null }))} />
+                <label className="mb-1 block text-sm font-medium">
+                  Licence
+                </label>
+                <Input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) =>
+                    setDocs((d) => ({
+                      ...d,
+                      license: e.target.files?.[0] || null,
+                    }))
+                  }
+                />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">RC card</label>
-                <Input type="file" accept="image/*,application/pdf" onChange={(e)=>setDocs((d)=>({ ...d, rc: e.target.files?.[0] || null }))} />
+                <label className="mb-1 block text-sm font-medium">
+                  RC card
+                </label>
+                <Input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) =>
+                    setDocs((d) => ({ ...d, rc: e.target.files?.[0] || null }))
+                  }
+                />
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium">Aadhaar</label>
-                <Input type="file" accept="image/*,application/pdf" onChange={(e)=>setDocs((d)=>({ ...d, aadhaar: e.target.files?.[0] || null }))} />
+                <label className="mb-1 block text-sm font-medium">
+                  Aadhaar
+                </label>
+                <Input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={(e) =>
+                    setDocs((d) => ({
+                      ...d,
+                      aadhaar: e.target.files?.[0] || null,
+                    }))
+                  }
+                />
               </div>
             </div>
             <div className="mt-6 flex gap-3">
-              <Button className="flex-1" onClick={onRiderKyc}>Verify & continue</Button>
-              <Button variant="outline" className="flex-1" onClick={() => go("role")}>Back</Button>
+              <Button className="flex-1" onClick={onRiderKyc}>
+                Verify & continue
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => go("role")}
+              >
+                Back
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -160,38 +271,76 @@ export default function Login() {
         <CardContent>
           <form onSubmit={onRegister} className="space-y-5">
             <div>
-              <label className="mb-1 block text-sm font-medium">Full name</label>
+              <label className="mb-1 block text-sm font-medium">
+                Full name
+              </label>
               <Input placeholder="Your name" {...form.register("name")} />
-              {form.formState.errors.name && <p className="mt-1 text-sm text-red-600">{form.formState.errors.name.message as string}</p>}
+              {form.formState.errors.name && (
+                <p className="mt-1 text-sm text-red-600">
+                  {form.formState.errors.name.message as string}
+                </p>
+              )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-sm font-medium">Mobile number</label>
-                <Input inputMode="numeric" maxLength={10} placeholder="10‑digit number" {...form.register("phone")} />
+                <label className="mb-1 block text-sm font-medium">
+                  Mobile number
+                </label>
+                <Input
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="10‑digit number"
+                  {...form.register("phone")}
+                />
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium">Gmail</label>
-                <Input type="email" placeholder="you@gmail.com" {...form.register("email")} />
+                <Input
+                  type="email"
+                  placeholder="you@gmail.com"
+                  {...form.register("email")}
+                />
               </div>
             </div>
             <div>
               <div className="flex items-center gap-3">
-                <Button type="button" onClick={otp.send} disabled={!form.watch("phone") || otp.seconds>0}>
-                  {otp.seconds>0?`Resend in ${otp.seconds}s`:"Send OTP"}
+                <Button
+                  type="button"
+                  onClick={otp.send}
+                  disabled={!form.watch("phone") || otp.seconds > 0}
+                >
+                  {otp.seconds > 0 ? `Resend in ${otp.seconds}s` : "Send OTP"}
                 </Button>
-                <span className="text-xs text-muted-foreground">We’ll text a 6‑digit code to your phone.</span>
+                <span className="text-xs text-muted-foreground">
+                  We’ll text a 6‑digit code to your phone.
+                </span>
               </div>
               <div className="mt-3">
-                <InputOTP maxLength={6} value={form.watch("otp")} onChange={(v)=>form.setValue("otp", v)}>
+                <InputOTP
+                  maxLength={6}
+                  value={form.watch("otp")}
+                  onChange={(v) => form.setValue("otp", v)}
+                >
                   <InputOTPGroup>
-                    {[0,1,2,3,4,5].map(i=> (<InputOTPSlot key={i} index={i} />))}
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot key={i} index={i} />
+                    ))}
                   </InputOTPGroup>
                 </InputOTP>
               </div>
             </div>
             <div className="flex gap-3">
-              <Button type="submit" className="flex-1">Continue</Button>
-              <Button type="button" variant="outline" className="flex-1" onClick={()=>navigate("/")}>Cancel</Button>
+              <Button type="submit" className="flex-1">
+                Continue
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => navigate("/")}
+              >
+                Cancel
+              </Button>
             </div>
           </form>
         </CardContent>
