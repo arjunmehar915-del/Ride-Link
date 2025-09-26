@@ -59,8 +59,7 @@ function generateOtp() {
 
 export default function Search() {
   const qp = useQuery();
-  const [waiting, setWaiting] = useState(false);
-  const [declined, setDeclined] = useState(false);
+  const [assigning, setAssigning] = useState(false);
   const [current, setCurrent] = useState<CurrentRide | null>(() => readCurrentRide());
   const [enteredOtp, setEnteredOtp] = useState("");
 
@@ -74,26 +73,17 @@ export default function Search() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const nearestRider = useMemo(() => {
-    return [...demoRiders].sort((a,b) => a.distanceKm - b.distanceKm || a.etaMin - b.etaMin || b.rating - a.rating)[0];
+  const bestMatch = useMemo(() => {
+    return [...demoRiders].sort((a,b) => a.etaMin - b.etaMin || b.rating - a.rating)[0];
   }, []);
 
-  const requestNearest = () => {
+  const requestRide = (rider: Rider) => {
     if (!getAuth()) { toast.error("Please login to request a ride"); return; }
-    setDeclined(false);
-    setWaiting(true);
-    // Simulate rider acceptance flow (server push in real app)
+    setAssigning(true);
     setTimeout(() => {
-      const accepted = true; // acceptance gate; only allocate if rider accepts
-      if (!accepted) {
-        setWaiting(false);
-        setDeclined(true);
-        toast.error("Nearest rider declined. Try again in a moment.");
-        return;
-      }
       const ride: CurrentRide = {
         id: `ride_${Date.now()}`,
-        rider: nearestRider,
+        rider,
         from,
         to,
         seats,
@@ -103,17 +93,15 @@ export default function Search() {
       };
       writeCurrentRide(ride);
       setCurrent(ride);
-      setWaiting(false);
-      toast.success("Rider accepted", { description: `${nearestRider.name} arriving in ${nearestRider.etaMin} min` });
-    }, 1800);
+      setAssigning(false);
+      toast.success("Rider allocated", { description: `${rider.name} arriving in ${rider.etaMin} min` });
+    }, 1200);
   };
 
   const cancelRide = () => {
     writeCurrentRide(null);
     setCurrent(null);
     setEnteredOtp("");
-    setWaiting(false);
-    setDeclined(false);
     toast("Ride canceled");
   };
 
@@ -195,39 +183,44 @@ export default function Search() {
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Nearest rider</span>
+            <span>Nearby riders</span>
             <Badge variant="secondary">{from} → {to}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-start justify-between gap-4 rounded-lg border p-4 sm:flex-row sm:items-center">
-            <div className="flex items-center gap-4">
-              <div className="rounded-md bg-primary/10 p-2"><Bike className="h-6 w-6 text-primary"/></div>
-              <div>
-                <div className="font-semibold">{nearestRider.name} <span className="ml-2 align-middle text-sm text-muted-foreground">{nearestRider.vehicle} • {nearestRider.plate}</span></div>
-                <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                  <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-yellow-500"/>{nearestRider.rating}</span>
-                  <span>{nearestRider.trips} trips</span>
-                  <span>{nearestRider.distanceKm} km away</span>
-                  <span>{nearestRider.etaMin} min ETA</span>
+          <div className="grid gap-4">
+            {demoRiders.map((r) => (
+              <div key={r.id} className="flex flex-col items-start justify-between gap-3 rounded-lg border p-4 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-4">
+                  <div className="rounded-md bg-primary/10 p-2"><Bike className="h-6 w-6 text-primary"/></div>
+                  <div>
+                    <div className="font-semibold">{r.name} <span className="ml-2 align-middle text-sm text-muted-foreground">{r.vehicle} • {r.plate}</span></div>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                      <span className="inline-flex items-center gap-1"><Star className="h-3.5 w-3.5 text-yellow-500"/>{r.rating}</span>
+                      <span>{r.trips} trips</span>
+                      <span>{r.distanceKm} km away</span>
+                      <span>{r.etaMin} min ETA</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-lg font-bold">₹{r.fare}</div>
+                    <div className="text-xs text-muted-foreground">est.</div>
+                  </div>
+                  <Button disabled={assigning} onClick={() => requestRide(r)}>{assigning ? "Assigning..." : "Request"}</Button>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-lg font-bold">₹{nearestRider.fare}</div>
-                <div className="text-xs text-muted-foreground">est.</div>
-              </div>
-              <Button disabled={waiting} onClick={requestNearest}>{waiting ? "Waiting for acceptance..." : "Request ride"}</Button>
-            </div>
+            ))}
           </div>
-          {declined && (
-            <div className="mt-4 text-sm text-red-600">Nearest rider declined. Please try again.</div>
-          )}
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm text-muted-foreground">Best match: {bestMatch.name} in {bestMatch.etaMin} min</div>
+            <Button disabled={assigning} onClick={() => requestRide(bestMatch)}>{assigning ? "Assigning..." : "Request best match"}</Button>
+          </div>
         </CardContent>
       </Card>
       <p className="mt-3 text-xs text-muted-foreground flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5"/>OTP is required to start the ride. Share only with your allotted rider.</p>
