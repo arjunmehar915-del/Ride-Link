@@ -10,6 +10,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MainLayout from "@/components/layout/MainLayout";
 import Placeholder from "@/pages/Placeholder";
+import About from "@/pages/About";
+import Help from "@/pages/Help";
 import Safety from "@/pages/Safety";
 import Search from "@/pages/Search";
 import PostRide from "@/pages/PostRide";
@@ -29,10 +31,11 @@ const App = () => (
             <Route path="/search" element={<Search />} />
             <Route path="/post-ride" element={<PostRide />} />
             <Route path="/safety" element={<Safety />} />
-            <Route path="/about" element={<Placeholder title="About" />} />
+            <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Placeholder title="Sign up" />} />
           </Route>
+            <Route path="/help" element={<Help />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
