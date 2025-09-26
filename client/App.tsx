@@ -16,6 +16,7 @@ import Safety from "@/pages/Safety";
 import Search from "@/pages/Search";
 import PostRide from "@/pages/PostRide";
 import Login from "@/pages/Login";
+import Account from "@/pages/Account";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Placeholder title="Sign up" />} />
+            <Route path="/account" element={<Account />} />
           </Route>
           <Route path="/help" element={<Help />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
