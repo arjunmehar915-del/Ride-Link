@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import MainLayout from "@/components/layout/MainLayout";
 import Placeholder from "@/pages/Placeholder";
+import Search from "@/pages/Search";
 import PostRide from "@/pages/PostRide";
 import Login from "@/pages/Login";
 
@@ -24,7 +25,7 @@ const App = () => (
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Index />} />
-            <Route path="/search" element={<Placeholder title="Search" />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/post-ride" element={<PostRide />} />
             <Route path="/safety" element={<Placeholder title="Safety" />} />
             <Route path="/about" element={<Placeholder title="About" />} />
