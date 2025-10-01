@@ -183,9 +183,12 @@ export default function MainLayout() {
 
   useEffect(() => {
     if (!auth && location.pathname !== "/login") {
-      navigate("/login", { replace: true });
+      const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
+      const params = new URLSearchParams();
+      params.set("redirect", redirectTarget && redirectTarget !== "/" ? redirectTarget : "/");
+      navigate(`/login?${params.toString()}`, { replace: true });
     }
-  }, [auth, location.pathname, navigate]);
+  }, [auth, location.pathname, location.search, location.hash, navigate]);
 
   return (
     <div className="flex min-h-screen flex-col">
