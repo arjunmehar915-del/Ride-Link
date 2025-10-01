@@ -22,6 +22,8 @@ const baseSchema = z.object({
 
 type RegistrationValues = z.infer<typeof baseSchema>;
 
+type Step = "register" | "role" | "rider-kyc";
+
 interface RiderDocs {
   license?: File | null;
   rc?: File | null;
@@ -63,9 +65,15 @@ function useOtp(phone: string) {
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const step =
-    (searchParams.get("step") as "register" | "role" | "rider-kyc") ||
-    "register";
+  const step = (searchParams.get("step") as Step) || "register";
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = useMemo(() => {
+    if (!redirectParam) return "/";
+    if (!redirectParam.startsWith("/")) return "/";
+    if (redirectParam.startsWith("//")) return "/";
+    if (redirectParam === "/login") return "/";
+    return redirectParam;
+  }, [redirectParam]);
 
   const [registration, setRegistration] = useState<RegistrationValues | null>(
     () => {
