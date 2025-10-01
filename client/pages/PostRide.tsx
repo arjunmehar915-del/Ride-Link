@@ -53,12 +53,7 @@ export default function PostRide() {
     } catch {
       auth = null;
     }
-    const authData = auth as
-      | ({
-          role?: string;
-          docs?: { license?: string | null; rc?: string | null; aadhaar?: string | null };
-        } & Record<string, unknown>)
-      | null;
+    const authData = (auth as StoredAuth | null) ?? null;
     const docs = authData?.docs;
     const hasRiderDocs =
       docs !== undefined &&
