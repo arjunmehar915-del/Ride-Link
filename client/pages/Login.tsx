@@ -352,7 +352,7 @@ export default function Login() {
                 type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(redirectTo, { replace: true })}
               >
                 Cancel
               </Button>
