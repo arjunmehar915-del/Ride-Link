@@ -20,6 +20,16 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+interface StoredAuth {
+  role?: string;
+  docs?: {
+    license?: string | null;
+    rc?: string | null;
+    aadhaar?: string | null;
+  };
+  [key: string]: unknown;
+}
+
 export default function PostRide() {
   const navigate = useNavigate();
 
