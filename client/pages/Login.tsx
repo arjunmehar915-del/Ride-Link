@@ -159,7 +159,7 @@ export default function Login() {
     );
     localStorage.removeItem("ridelink:registration");
     toast.success("Rider verified");
-    navigate("/");
+    navigate(redirectTo, { replace: true });
   };
 
   if (step === "role") {
