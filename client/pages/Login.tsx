@@ -95,12 +95,19 @@ export default function Login() {
 
   useEffect(() => {
     if ((step === "role" || step === "rider-kyc") && !registration) {
-      setSearchParams({ step: "register" });
+      const params = new URLSearchParams();
+      params.set("step", "register");
+      if (redirectParam !== null) params.set("redirect", redirectParam);
+      setSearchParams(params);
     }
-  }, [step, registration, setSearchParams]);
+  }, [step, registration, redirectParam, setSearchParams]);
 
-  const go = (next: "register" | "role" | "rider-kyc") =>
-    setSearchParams({ step: next });
+  const go = (next: Step) => {
+    const params = new URLSearchParams();
+    params.set("step", next);
+    if (redirectParam !== null) params.set("redirect", redirectParam);
+    setSearchParams(params);
+  };
 
   const onRegister = form.handleSubmit((data) => {
     if (!otp.verify(data.otp)) {
