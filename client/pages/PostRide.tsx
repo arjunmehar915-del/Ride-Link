@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,37 @@ export default function PostRide() {
   const values = watch();
 
   const onSubmit = (data: FormValues) => {
+    let auth: unknown;
+    try {
+      auth = JSON.parse(localStorage.getItem("ridelink:auth") || "null");
+    } catch {
+      auth = null;
+    }
+    const authData = auth as
+      | ({
+          role?: string;
+          docs?: { license?: string | null; rc?: string | null; aadhaar?: string | null };
+        } & Record<string, unknown>)
+      | null;
+    const docs = authData?.docs;
+    const hasRiderDocs =
+      docs !== undefined &&
+      typeof docs?.license === "string" &&
+      docs.license &&
+      typeof docs?.rc === "string" &&
+      docs.rc &&
+      typeof docs?.aadhaar === "string" &&
+      docs.aadhaar;
+
+    if (authData?.role !== "rider" || !hasRiderDocs) {
+      toast.error("Complete rider verification to publish rides");
+      const params = new URLSearchParams();
+      params.set("step", "rider-kyc");
+      params.set("redirect", "/post-ride");
+      navigate(`/login?${params.toString()}`);
+      return;
+    }
+
     const ride = { ...data, id: crypto.randomUUID(), createdAt: Date.now() };
     const key = "ridelink:rides";
     const existing = JSON.parse(localStorage.getItem(key) || "[]") as unknown[];
