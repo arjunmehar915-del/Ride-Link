@@ -133,7 +133,7 @@ export default function Login() {
     );
     localStorage.removeItem("ridelink:registration");
     toast.success("Signed in as passenger");
-    navigate("/");
+    navigate(redirectTo, { replace: true });
   };
 
   const [docs, setDocs] = useState<RiderDocs>({});
