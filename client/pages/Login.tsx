@@ -74,6 +74,9 @@ export default function Login() {
     if (redirectParam === "/login") return "/";
     return redirectParam;
   }, [redirectParam]);
+  const roleParamRaw = searchParams.get("role");
+  const roleHint: "user" | "rider" | null =
+    roleParamRaw === "user" || roleParamRaw === "rider" ? roleParamRaw : null;
 
   const [registration, setRegistration] = useState<RegistrationValues | null>(
     () => {
@@ -98,15 +101,33 @@ export default function Login() {
       const params = new URLSearchParams();
       params.set("step", "register");
       if (redirectParam !== null) params.set("redirect", redirectParam);
+      if (roleHint) params.set("role", roleHint);
       setSearchParams(params);
     }
-  }, [step, registration, redirectParam, setSearchParams]);
+  }, [step, registration, redirectParam, roleHint, setSearchParams]);
 
   const go = (next: Step) => {
     const params = new URLSearchParams();
     params.set("step", next);
     if (redirectParam !== null) params.set("redirect", redirectParam);
+    if (roleHint) params.set("role", roleHint);
     setSearchParams(params);
+  };
+
+  const completePassengerSignin = (details: RegistrationValues) => {
+    localStorage.setItem(
+      "ridelink:auth",
+      JSON.stringify({
+        role: "user",
+        name: details.name,
+        phone: details.phone,
+        email: details.email,
+      }),
+    );
+    localStorage.removeItem("ridelink:registration");
+    setRegistration(null);
+    toast.success("Signed in as passenger");
+    navigate(redirectTo, { replace: true });
   };
 
   const onRegister = form.handleSubmit((data) => {
@@ -117,23 +138,20 @@ export default function Login() {
     setRegistration(data);
     localStorage.setItem("ridelink:registration", JSON.stringify(data));
     toast.success("Verified");
+    if (roleHint === "user") {
+      completePassengerSignin(data);
+      return;
+    }
+    if (roleHint === "rider") {
+      go("rider-kyc");
+      return;
+    }
     go("role");
   });
 
   const choosePassenger = () => {
     if (!registration) return;
-    localStorage.setItem(
-      "ridelink:auth",
-      JSON.stringify({
-        role: "user",
-        name: registration.name,
-        phone: registration.phone,
-        email: registration.email,
-      }),
-    );
-    localStorage.removeItem("ridelink:registration");
-    toast.success("Signed in as passenger");
-    navigate(redirectTo, { replace: true });
+    completePassengerSignin(registration);
   };
 
   const [docs, setDocs] = useState<RiderDocs>({});
@@ -158,6 +176,7 @@ export default function Login() {
       }),
     );
     localStorage.removeItem("ridelink:registration");
+    setRegistration(null);
     toast.success("Rider verified");
     navigate(redirectTo, { replace: true });
   };
