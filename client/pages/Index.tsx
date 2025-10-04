@@ -19,7 +19,7 @@ import {
   Users,
   GraduationCap,
   Building2,
-  HeartHandshake,
+  Handshake,
 } from "lucide-react";
 
 export default function Index() {
