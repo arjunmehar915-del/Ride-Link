@@ -112,7 +112,7 @@ export default function Safety() {
                   ? kycComplete
                     ? "Your rider KYC is complete. Keep documents up to date for continued access."
                     : "Upload required documents to start offering rides."
-                  : "Passengers are not required to submit documents. Riders must complete KYC before accepting rides."}
+                  : "Passengers are not required to submit documents. Riders must upload licence and RC before accepting rides."}
               </AlertDescription>
             </Alert>
             <div className="mt-4 flex flex-wrap gap-3">
