@@ -67,7 +67,7 @@ export default function Safety() {
 
   const docs = auth?.docs ?? {};
   const kycComplete = useMemo(
-    () => !!(docs.license && docs.rc && docs.aadhaar),
+    () => !!(docs.license && docs.rc),
     [docs],
   );
 
