@@ -35,7 +35,6 @@ interface AuthUser {
   docs?: {
     license?: string | null;
     rc?: string | null;
-    aadhaar?: string | null;
   };
 }
 
