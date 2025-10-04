@@ -11,7 +11,16 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ShieldCheck, MapPin, Navigation, Sparkles, Users, Clock4 } from "lucide-react";
+import {
+  ShieldCheck,
+  MapPin,
+  Navigation,
+  Sparkles,
+  Users,
+  GraduationCap,
+  Building2,
+  HeartHandshake,
+} from "lucide-react";
 
 export default function Index() {
   const navigate = useNavigate();
@@ -122,21 +131,66 @@ export default function Index() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card className="border-0 bg-background">
               <CardHeader>
-                <CardTitle className="text-xl">Lower daily costs</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                  College pooling desk
+                </CardTitle>
               </CardHeader>
-              <CardContent className="text-muted-foreground">Share empty seats to offset fuel and maintenance while passengers pay less than taxis.</CardContent>
+              <CardContent className="space-y-3 text-muted-foreground">
+                <p>
+                  Coordinate campus commutes with verified seniors and juniors, shared pickup points, and ride rotas managed by the student union.
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-primary" /> Hostel to lecture‑hall loops
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-primary" /> ID-based onboarding with mentoring
+                  </li>
+                </ul>
+              </CardContent>
             </Card>
             <Card className="border-0 bg-background">
               <CardHeader>
-                <CardTitle className="text-xl">Carbon‑smart commutes</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <Building2 className="h-6 w-6 text-primary" />
+                  Office pooling hub
+                </CardTitle>
               </CardHeader>
-              <CardContent className="text-muted-foreground">Fewer single‑occupancy vehicles means lower congestion and emissions across the city.</CardContent>
+              <CardContent className="space-y-3 text-muted-foreground">
+                <p>
+                  Give HR and facility teams a real-time roster of daily cabs, staggered shifts, and verified drivers for safer returns after late projects.
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-primary" /> Attendance-linked ride credits
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-primary" /> Emergency backup partners on-call
+                  </li>
+                </ul>
+              </CardContent>
             </Card>
             <Card className="border-0 bg-background">
               <CardHeader>
-                <CardTitle className="text-xl">Built to scale</CardTitle>
+                <CardTitle className="flex items-center gap-3 text-xl">
+                  <HeartHandshake className="h-6 w-6 text-primary" />
+                  Why pooling works
+                </CardTitle>
               </CardHeader>
-              <CardContent className="text-muted-foreground">Architecture ready for multi‑city rollout, with admin dashboards and analytics.</CardContent>
+              <CardContent className="space-y-3 text-muted-foreground">
+                <p>
+                  Everyone wins—drivers recover costs, passengers save up to 60%, and institutions report greener commutes for ESG scorecards.
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-primary" /> Fewer solo vehicles, cleaner air
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-primary" /> Community trust via OTP & ratings
+                  </li>
+                </ul>
+              </CardContent>
             </Card>
           </div>
         </div>
