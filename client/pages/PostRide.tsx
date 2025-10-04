@@ -77,12 +77,12 @@ export default function PostRide() {
       params.set("role", "rider");
 
       if (authData?.role === "user") {
-        const prefill = {
+        const prefill: RegistrationPrefill = {
           name: typeof authData.name === "string" ? authData.name : "",
           phone: typeof authData.phone === "string" ? authData.phone : "",
           email: typeof authData.email === "string" ? authData.email : "",
           otp: "000000",
-        } satisfies RegistrationValues;
+        };
         localStorage.setItem("ridelink:registration", JSON.stringify(prefill));
         toast.info("Complete rider profile to publish rides");
       } else {
