@@ -193,6 +193,15 @@ export default function MainLayout() {
     const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
     const params = new URLSearchParams();
     params.set("redirect", redirectTarget && redirectTarget !== "/" ? redirectTarget : "/");
+    const roleHints: Record<string, "user" | "rider"> = {
+      "/search": "user",
+      "/post-ride": "rider",
+    };
+    const hintedRole = Object.entries(roleHints).find(([path]) => {
+      if (location.pathname === path) return true;
+      return location.pathname.startsWith(`${path}/`);
+    })?.[1];
+    if (hintedRole) params.set("role", hintedRole);
     navigate(`/login?${params.toString()}`, { replace: true });
   }, [auth, location.pathname, location.search, location.hash, navigate]);
 
