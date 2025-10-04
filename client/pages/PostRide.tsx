@@ -64,10 +64,25 @@ export default function PostRide() {
       docs.aadhaar;
 
     if (authData?.role !== "rider" || !hasRiderDocs) {
-      toast.error("Complete rider verification to publish rides");
       const params = new URLSearchParams();
       params.set("step", "rider-kyc");
       params.set("redirect", "/post-ride");
+      params.set("role", "rider");
+
+      if (authData?.role === "user") {
+        const prefill = {
+          name: typeof authData.name === "string" ? authData.name : "",
+          phone: typeof authData.phone === "string" ? authData.phone : "",
+          email: typeof authData.email === "string" ? authData.email : "",
+          otp: "000000",
+        } satisfies RegistrationValues;
+        localStorage.setItem("ridelink:registration", JSON.stringify(prefill));
+        toast.info("Complete rider profile to publish rides");
+      } else {
+        localStorage.removeItem("ridelink:registration");
+        toast.error("Complete rider verification to publish rides");
+      }
+
       navigate(`/login?${params.toString()}`);
       return;
     }
