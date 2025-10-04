@@ -174,7 +174,7 @@ export default function Index() {
             <Card className="border-0 bg-background">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl">
-                  <HeartHandshake className="h-6 w-6 text-primary" />
+                  <Handshake className="h-6 w-6 text-primary" />
                   Why pooling works
                 </CardTitle>
               </CardHeader>
