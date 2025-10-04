@@ -35,7 +35,6 @@ interface AuthUser {
   docs?: {
     license?: string | null;
     rc?: string | null;
-    aadhaar?: string | null;
   };
 }
 
@@ -68,7 +67,7 @@ export default function Safety() {
 
   const docs = auth?.docs ?? {};
   const kycComplete = useMemo(
-    () => !!(docs.license && docs.rc && docs.aadhaar),
+    () => !!(docs.license && docs.rc),
     [docs],
   );
 
@@ -102,7 +101,6 @@ export default function Safety() {
             <div className="flex flex-wrap gap-2">
               <DocBadge ok={!!docs.license} label="Licence" />
               <DocBadge ok={!!docs.rc} label="RC" />
-              <DocBadge ok={!!docs.aadhaar} label="Aadhaar" />
             </div>
             <Alert className="mt-4">
               <AlertTitle className="flex items-center gap-2">
@@ -114,7 +112,7 @@ export default function Safety() {
                   ? kycComplete
                     ? "Your rider KYC is complete. Keep documents up to date for continued access."
                     : "Upload required documents to start offering rides."
-                  : "Passengers are not required to submit documents. Riders must complete KYC before accepting rides."}
+                  : "Passengers are not required to submit documents. Riders must upload licence and RC before accepting rides."}
               </AlertDescription>
             </Alert>
             <div className="mt-4 flex flex-wrap gap-3">

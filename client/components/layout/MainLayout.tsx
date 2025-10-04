@@ -182,10 +182,28 @@ export default function MainLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!auth && location.pathname !== "/login") {
-      navigate("/login", { replace: true });
-    }
-  }, [auth, location.pathname, navigate]);
+    if (auth) return;
+    if (location.pathname === "/login") return;
+    const protectedPrefixes = ["/search", "/post-ride", "/account"];
+    const requiresAuth = protectedPrefixes.some((path) => {
+      if (location.pathname === path) return true;
+      return location.pathname.startsWith(`${path}/`);
+    });
+    if (!requiresAuth) return;
+    const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
+    const params = new URLSearchParams();
+    params.set("redirect", redirectTarget && redirectTarget !== "/" ? redirectTarget : "/");
+    const roleHints: Record<string, "user" | "rider"> = {
+      "/search": "user",
+      "/post-ride": "rider",
+    };
+    const hintedRole = Object.entries(roleHints).find(([path]) => {
+      if (location.pathname === path) return true;
+      return location.pathname.startsWith(`${path}/`);
+    })?.[1];
+    if (hintedRole) params.set("role", hintedRole);
+    navigate(`/login?${params.toString()}`, { replace: true });
+  }, [auth, location.pathname, location.search, location.hash, navigate]);
 
   return (
     <div className="flex min-h-screen flex-col">

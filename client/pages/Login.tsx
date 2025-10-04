@@ -22,10 +22,11 @@ const baseSchema = z.object({
 
 type RegistrationValues = z.infer<typeof baseSchema>;
 
+type Step = "register" | "role" | "rider-kyc";
+
 interface RiderDocs {
   license?: File | null;
   rc?: File | null;
-  aadhaar?: File | null;
 }
 
 function useOtp(phone: string) {
@@ -63,9 +64,18 @@ function useOtp(phone: string) {
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const step =
-    (searchParams.get("step") as "register" | "role" | "rider-kyc") ||
-    "register";
+  const step = (searchParams.get("step") as Step) || "register";
+  const redirectParam = searchParams.get("redirect");
+  const redirectTo = useMemo(() => {
+    if (!redirectParam) return "/";
+    if (!redirectParam.startsWith("/")) return "/";
+    if (redirectParam.startsWith("//")) return "/";
+    if (redirectParam === "/login") return "/";
+    return redirectParam;
+  }, [redirectParam]);
+  const roleParamRaw = searchParams.get("role");
+  const roleHint: "user" | "rider" | null =
+    roleParamRaw === "user" || roleParamRaw === "rider" ? roleParamRaw : null;
 
   const [registration, setRegistration] = useState<RegistrationValues | null>(
     () => {
@@ -87,12 +97,37 @@ export default function Login() {
 
   useEffect(() => {
     if ((step === "role" || step === "rider-kyc") && !registration) {
-      setSearchParams({ step: "register" });
+      const params = new URLSearchParams();
+      params.set("step", "register");
+      if (redirectParam !== null) params.set("redirect", redirectParam);
+      if (roleHint) params.set("role", roleHint);
+      setSearchParams(params);
     }
-  }, [step, registration, setSearchParams]);
+  }, [step, registration, redirectParam, roleHint, setSearchParams]);
 
-  const go = (next: "register" | "role" | "rider-kyc") =>
-    setSearchParams({ step: next });
+  const go = (next: Step) => {
+    const params = new URLSearchParams();
+    params.set("step", next);
+    if (redirectParam !== null) params.set("redirect", redirectParam);
+    if (roleHint) params.set("role", roleHint);
+    setSearchParams(params);
+  };
+
+  const completePassengerSignin = (details: RegistrationValues) => {
+    localStorage.setItem(
+      "ridelink:auth",
+      JSON.stringify({
+        role: "user",
+        name: details.name,
+        phone: details.phone,
+        email: details.email,
+      }),
+    );
+    localStorage.removeItem("ridelink:registration");
+    setRegistration(null);
+    toast.success("Signed in as passenger");
+    navigate(redirectTo, { replace: true });
+  };
 
   const onRegister = form.handleSubmit((data) => {
     if (!otp.verify(data.otp)) {
@@ -102,30 +137,27 @@ export default function Login() {
     setRegistration(data);
     localStorage.setItem("ridelink:registration", JSON.stringify(data));
     toast.success("Verified");
+    if (roleHint === "user") {
+      completePassengerSignin(data);
+      return;
+    }
+    if (roleHint === "rider") {
+      go("rider-kyc");
+      return;
+    }
     go("role");
   });
 
   const choosePassenger = () => {
     if (!registration) return;
-    localStorage.setItem(
-      "ridelink:auth",
-      JSON.stringify({
-        role: "user",
-        name: registration.name,
-        phone: registration.phone,
-        email: registration.email,
-      }),
-    );
-    localStorage.removeItem("ridelink:registration");
-    toast.success("Signed in as passenger");
-    navigate("/");
+    completePassengerSignin(registration);
   };
 
   const [docs, setDocs] = useState<RiderDocs>({});
   const onRiderKyc = () => {
     if (!registration) return;
-    if (!docs.license || !docs.rc || !docs.aadhaar) {
-      toast.error("Please upload Licence, RC and Aadhaar");
+    if (!docs.license || !docs.rc) {
+      toast.error("Please upload Licence and RC");
       return;
     }
     localStorage.setItem(
@@ -138,13 +170,13 @@ export default function Login() {
         docs: {
           license: (docs.license as File).name,
           rc: (docs.rc as File).name,
-          aadhaar: (docs.aadhaar as File).name,
         },
       }),
     );
     localStorage.removeItem("ridelink:registration");
+    setRegistration(null);
     toast.success("Rider verified");
-    navigate("/");
+    navigate(redirectTo, { replace: true });
   };
 
   if (step === "role") {
@@ -200,7 +232,7 @@ export default function Login() {
             <CardTitle className="text-2xl">Rider verification</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Licence
@@ -225,21 +257,6 @@ export default function Login() {
                   accept="image/*,application/pdf"
                   onChange={(e) =>
                     setDocs((d) => ({ ...d, rc: e.target.files?.[0] || null }))
-                  }
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Aadhaar
-                </label>
-                <Input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) =>
-                    setDocs((d) => ({
-                      ...d,
-                      aadhaar: e.target.files?.[0] || null,
-                    }))
                   }
                 />
               </div>
@@ -337,7 +354,7 @@ export default function Login() {
                 type="button"
                 variant="outline"
                 className="flex-1"
-                onClick={() => navigate("/")}
+                onClick={() => navigate(redirectTo, { replace: true })}
               >
                 Cancel
               </Button>

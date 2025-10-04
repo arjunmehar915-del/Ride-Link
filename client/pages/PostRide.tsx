@@ -1,5 +1,5 @@
-import { useNavigate } from "react-router-dom";
 import { z } from "zod";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,22 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+type RegistrationPrefill = {
+  name: string;
+  phone: string;
+  email: string;
+  otp: string;
+};
+
+interface StoredAuth {
+  role?: string;
+  docs?: {
+    license?: string | null;
+    rc?: string | null;
+  };
+  [key: string]: unknown;
+}
+
 export default function PostRide() {
   const navigate = useNavigate();
 
@@ -36,6 +52,45 @@ export default function PostRide() {
   const values = watch();
 
   const onSubmit = (data: FormValues) => {
+    let auth: unknown;
+    try {
+      auth = JSON.parse(localStorage.getItem("ridelink:auth") || "null");
+    } catch {
+      auth = null;
+    }
+    const authData = (auth as StoredAuth | null) ?? null;
+    const docs = authData?.docs;
+    const hasRiderDocs =
+      docs !== undefined &&
+      typeof docs?.license === "string" &&
+      docs.license &&
+      typeof docs?.rc === "string" &&
+      docs.rc;
+
+    if (authData?.role !== "rider" || !hasRiderDocs) {
+      const params = new URLSearchParams();
+      params.set("step", "rider-kyc");
+      params.set("redirect", "/post-ride");
+      params.set("role", "rider");
+
+      if (authData?.role === "user") {
+        const prefill: RegistrationPrefill = {
+          name: typeof authData.name === "string" ? authData.name : "",
+          phone: typeof authData.phone === "string" ? authData.phone : "",
+          email: typeof authData.email === "string" ? authData.email : "",
+          otp: "000000",
+        };
+        localStorage.setItem("ridelink:registration", JSON.stringify(prefill));
+        toast.info("Complete rider profile to publish rides");
+      } else {
+        localStorage.removeItem("ridelink:registration");
+        toast.error("Complete rider verification to publish rides");
+      }
+
+      navigate(`/login?${params.toString()}`);
+      return;
+    }
+
     const ride = { ...data, id: crypto.randomUUID(), createdAt: Date.now() };
     const key = "ridelink:rides";
     const existing = JSON.parse(localStorage.getItem(key) || "[]") as unknown[];
