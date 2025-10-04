@@ -182,12 +182,18 @@ export default function MainLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (!auth && location.pathname !== "/login") {
-      const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
-      const params = new URLSearchParams();
-      params.set("redirect", redirectTarget && redirectTarget !== "/" ? redirectTarget : "/");
-      navigate(`/login?${params.toString()}`, { replace: true });
-    }
+    if (auth) return;
+    if (location.pathname === "/login") return;
+    const protectedPrefixes = ["/search", "/post-ride", "/account"];
+    const requiresAuth = protectedPrefixes.some((path) => {
+      if (location.pathname === path) return true;
+      return location.pathname.startsWith(`${path}/`);
+    });
+    if (!requiresAuth) return;
+    const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
+    const params = new URLSearchParams();
+    params.set("redirect", redirectTarget && redirectTarget !== "/" ? redirectTarget : "/");
+    navigate(`/login?${params.toString()}`, { replace: true });
   }, [auth, location.pathname, location.search, location.hash, navigate]);
 
   return (
