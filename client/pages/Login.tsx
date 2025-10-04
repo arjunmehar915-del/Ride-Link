@@ -27,7 +27,6 @@ type Step = "register" | "role" | "rider-kyc";
 interface RiderDocs {
   license?: File | null;
   rc?: File | null;
-  aadhaar?: File | null;
 }
 
 function useOtp(phone: string) {
@@ -157,8 +156,8 @@ export default function Login() {
   const [docs, setDocs] = useState<RiderDocs>({});
   const onRiderKyc = () => {
     if (!registration) return;
-    if (!docs.license || !docs.rc || !docs.aadhaar) {
-      toast.error("Please upload Licence, RC and Aadhaar");
+    if (!docs.license || !docs.rc) {
+      toast.error("Please upload Licence and RC");
       return;
     }
     localStorage.setItem(
@@ -171,7 +170,6 @@ export default function Login() {
         docs: {
           license: (docs.license as File).name,
           rc: (docs.rc as File).name,
-          aadhaar: (docs.aadhaar as File).name,
         },
       }),
     );
@@ -234,7 +232,7 @@ export default function Login() {
             <CardTitle className="text-2xl">Rider verification</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium">
                   Licence
@@ -259,21 +257,6 @@ export default function Login() {
                   accept="image/*,application/pdf"
                   onChange={(e) =>
                     setDocs((d) => ({ ...d, rc: e.target.files?.[0] || null }))
-                  }
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Aadhaar
-                </label>
-                <Input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={(e) =>
-                    setDocs((d) => ({
-                      ...d,
-                      aadhaar: e.target.files?.[0] || null,
-                    }))
                   }
                 />
               </div>
