@@ -19,6 +19,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+type RegistrationPrefill = {
+  name: string;
+  phone: string;
+  email: string;
+  otp: string;
+};
+
 interface StoredAuth {
   role?: string;
   docs?: {
