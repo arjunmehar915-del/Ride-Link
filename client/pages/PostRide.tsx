@@ -31,7 +31,6 @@ interface StoredAuth {
   docs?: {
     license?: string | null;
     rc?: string | null;
-    aadhaar?: string | null;
   };
   [key: string]: unknown;
 }
@@ -66,9 +65,7 @@ export default function PostRide() {
       typeof docs?.license === "string" &&
       docs.license &&
       typeof docs?.rc === "string" &&
-      docs.rc &&
-      typeof docs?.aadhaar === "string" &&
-      docs.aadhaar;
+      docs.rc;
 
     if (authData?.role !== "rider" || !hasRiderDocs) {
       const params = new URLSearchParams();
