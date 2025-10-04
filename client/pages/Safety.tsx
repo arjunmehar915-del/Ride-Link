@@ -101,7 +101,6 @@ export default function Safety() {
             <div className="flex flex-wrap gap-2">
               <DocBadge ok={!!docs.license} label="Licence" />
               <DocBadge ok={!!docs.rc} label="RC" />
-              <DocBadge ok={!!docs.aadhaar} label="Aadhaar" />
             </div>
             <Alert className="mt-4">
               <AlertTitle className="flex items-center gap-2">
