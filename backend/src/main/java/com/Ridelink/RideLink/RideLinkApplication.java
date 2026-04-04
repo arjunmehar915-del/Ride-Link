@@ -9,3 +9,5 @@ public class RideLinkApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(RideLinkApplication.class, args);
 	}
+
+}

@@ -45,12 +45,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+        http
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll() // Login/Register is public
-                        .requestMatchers("/api/rides/search").permitAll() // Searching is public
-                        .anyRequest().authenticated() // Everything else requires login
+
+                        // 🔥 Swagger allow karo
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+
+                        // Public APIs
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/rides/search").permitAll()
+
+                        // Baaki sab secure
+                        .anyRequest().authenticated()
                 );
 
         http.authenticationProvider(authenticationProvider());
