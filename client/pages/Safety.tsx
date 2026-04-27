@@ -10,33 +10,53 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input"; // Input import kiya
 import {
   ShieldCheck,
   IdCard,
   FileCheck2,
   PhoneCall,
   BellRing,
-  MapPin,
-  Eye,
-  Lock,
-  UserCheck,
   Siren,
   MessageCircle,
   Star,
   HelpCircle,
   ArrowRight,
+  Loader2,
+  UploadCloud
 } from "lucide-react";
+import { toast } from "sonner";
 
 interface AuthUser {
-  role: "user" | "rider";
+  id: number;
+  token: string;
+  role: string;
   name: string;
   phone: string;
   email: string;
-  docs?: {
-    license?: string | null;
-    rc?: string | null;
-  };
+  kycStatus?: string;
+  licenseUrl?: string | null;
+  rcUrl?: string | null;
 }
+
+// --- CLOUDINARY UPLOAD HELPER ---
+const uploadToCloudinary = async (file: File) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  // 🔥 APNI DETAILS YAHAN DAALEIN 🔥
+  formData.append("upload_preset", "RideLink_docs");
+  const cloudName = "dnfu7zadq";
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error("Image upload failed");
+  const data = await res.json();
+  return data.secure_url;
+};
 
 function readAuth(): AuthUser | null {
   try {
@@ -46,30 +66,79 @@ function readAuth(): AuthUser | null {
   }
 }
 
-function DocBadge({ ok, label }: { ok: boolean; label: string }) {
+function DocBadge({ status }: { status: string }) {
+  const isOk = status === "APPROVED";
+  const isPending = status === "PENDING";
+
   return (
     <Badge
-      variant={ok ? "default" : "secondary"}
-      className={ok ? "bg-green-600" : undefined}
+      variant={isOk ? "default" : "secondary"}
+      className={isOk ? "bg-green-600" : isPending ? "bg-yellow-500 text-white" : "bg-red-500 text-white"}
     >
-      {ok ? "Verified" : "Missing"} • {label}
+      {status || "NOT SUBMITTED"}
     </Badge>
   );
 }
 
 export default function Safety() {
   const [auth, setAuth] = useState<AuthUser | null>(() => readAuth());
+  const [isUploading, setIsUploading] = useState(false);
+  const [files, setFiles] = useState<{ license: File | null; rc: File | null }>({
+    license: null,
+    rc: null,
+  });
+
   useEffect(() => {
     const onStorage = () => setAuth(readAuth());
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  const docs = auth?.docs ?? {};
-  const kycComplete = useMemo(
-    () => !!(docs.license && docs.rc),
-    [docs],
-  );
+  const handleUpdateDocuments = async () => {
+    if (!auth) return;
+    if (!files.license || !files.rc) {
+      toast.error("Please select both License and RC files");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      toast.info("Uploading documents to Cloudinary...");
+
+      // 1. Upload to Cloudinary
+      const licenseUrl = await uploadToCloudinary(files.license);
+      const rcUrl = await uploadToCloudinary(files.rc);
+
+      // 2. Backend Update
+      const response = await fetch(`http://localhost:9090/api/auth/update-kyc?userId=${auth.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${auth.token}`
+        },
+        body: JSON.stringify({
+          licenseUrl: licenseUrl,
+          rcUrl: rcUrl
+        })
+      });
+
+      if (response.ok) {
+        // LocalStorage Update
+        const updatedAuth = { ...auth, kycStatus: "PENDING", licenseUrl, rcUrl };
+        localStorage.setItem("ridelink:auth", JSON.stringify(updatedAuth));
+        setAuth(updatedAuth);
+
+        toast.success("Documents submitted! Admin will verify soon.");
+        setFiles({ license: null, rc: null });
+      } else {
+        throw new Error("Failed to update backend");
+      }
+    } catch (error) {
+      toast.error("Upload failed. Try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <section className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
@@ -77,283 +146,104 @@ export default function Safety() {
         <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
           <ShieldCheck className="h-7 w-7 text-primary" /> Safety & Security
         </h1>
-        <div className="flex flex-wrap items-center gap-2">
-          {auth ? (
-            <Badge variant="secondary" className="text-sm">
-              Signed in as {auth.name} • {auth.role}
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="text-sm">
-              Not signed in
-            </Badge>
-          )}
-        </div>
+        {auth && (
+          <Badge variant="secondary" className="text-sm">
+            Status: <span className="ml-1 font-bold">{auth.kycStatus || "NEW"}</span>
+          </Badge>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        {/* Verification Card */}
+        <Card className="border-primary/20 shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <IdCard className="h-5 w-5 text-primary" /> Verification status
+              <IdCard className="h-5 w-5 text-primary" /> Verification Portal
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
-              <DocBadge ok={!!docs.license} label="Licence" />
-              <DocBadge ok={!!docs.rc} label="RC" />
-            </div>
-            <Alert className="mt-4">
-              <AlertTitle className="flex items-center gap-2">
-                <FileCheck2 className="h-4 w-4" />
-                KYC
-              </AlertTitle>
-              <AlertDescription>
-                {auth?.role === "rider"
-                  ? kycComplete
-                    ? "Your rider KYC is complete. Keep documents up to date for continued access."
-                    : "Upload required documents to start offering rides."
-                  : "Passengers are not required to submit documents. Riders must upload licence and RC before accepting rides."}
-              </AlertDescription>
-            </Alert>
-            <div className="mt-4 flex flex-wrap gap-3">
-              {!auth && (
-                <Button asChild>
-                  <Link
-                    to="/login?step=register"
-                    className="inline-flex items-center gap-2"
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Current Status:</span>
+                <DocBadge status={auth?.kycStatus || ""} />
+              </div>
+
+              {/* File Inputs - Visible only for Riders */}
+              {auth?.role?.toLowerCase().includes("rider") || auth?.role?.toLowerCase().includes("driver") ? (
+                <div className="space-y-3 pt-2 border-t">
+                  <p className="text-xs font-bold text-muted-foreground uppercase">Update Documents</p>
+                  <div>
+                    <label className="text-[10px] font-bold ml-1">DRIVING LICENSE</label>
+                    <Input type="file" onChange={(e) => setFiles({...files, license: e.target.files?.[0] || null})} className="h-9 text-xs" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold ml-1">VEHICLE RC</label>
+                    <Input type="file" onChange={(e) => setFiles({...files, rc: e.target.files?.[0] || null})} className="h-9 text-xs" />
+                  </div>
+                  <Button
+                    onClick={handleUpdateDocuments}
+                    disabled={isUploading}
+                    className="w-full mt-2"
                   >
-                    <UserCheck className="h-4 w-4" />
-                    Register
-                  </Link>
-                </Button>
-              )}
-              {auth && auth.role === "user" && (
-                <Button asChild variant="outline">
-                  <Link to="/login?step=role">Switch role</Link>
-                </Button>
-              )}
-              {auth && auth.role === "rider" && (
-                <Button asChild variant="outline">
-                  <Link
-                    to="/login?step=rider-kyc"
-                    className="inline-flex items-center gap-2"
-                  >
-                    <FileCheck2 className="h-4 w-4" />
-                    Update documents
-                  </Link>
-                </Button>
+                    {isUploading ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</>
+                    ) : (
+                      <><UploadCloud className="mr-2 h-4 w-4" /> Submit for Verification</>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <Alert>
+                  <FileCheck2 className="h-4 w-4" />
+                  <AlertTitle>Passenger Account</AlertTitle>
+                  <AlertDescription>Verification is only required for Riders to offer rides.</AlertDescription>
+                </Alert>
               )}
             </div>
           </CardContent>
         </Card>
 
+        {/* Emergency Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <BellRing className="h-5 w-5 text-primary" /> Live ride protection
+              <BellRing className="h-5 w-5 text-primary" /> Emergency Support
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ul className="list-inside list-disc text-muted-foreground space-y-2">
-              <li>
-                OTP at pickup to ensure you’re boarding the allotted rider.
-              </li>
-              <li>
-                Masked contact: in-app calling without revealing phone numbers.
-              </li>
-              <li>
-                Share trip status with trusted contacts and enable live
-                location.
-              </li>
-              <li>
-                Post‑ride ratings and reports help us keep the community safe.
-              </li>
+            <ul className="text-sm text-muted-foreground space-y-3 mb-6">
+              <li className="flex gap-2">✅ Share live location with family.</li>
+              <li className="flex gap-2">✅ OTP verification before starting ride.</li>
+              <li className="flex gap-2">✅ 24/7 Incident reporting system.</li>
             </ul>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <Button asChild variant="outline">
-                <a href="tel:112" className="inline-flex items-center gap-2">
-                  <Siren className="h-4 w-4" />
-                  Emergency 112
-                </a>
+            <div className="flex gap-3">
+              <Button asChild variant="destructive" className="flex-1">
+                <a href="tel:112"><Siren className="mr-2 h-4 w-4" /> SOS 112</a>
               </Button>
-              <Button asChild variant="outline">
-                <a href="sms:+91112" className="inline-flex items-center gap-2">
-                  <PhoneCall className="h-4 w-4" />
-                  Text emergency
-                </a>
+              <Button asChild variant="outline" className="flex-1">
+                <a href="sms:112"><PhoneCall className="mr-2 h-4 w-4" /> SMS Help</a>
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* FAQs Section - (Pehle wala Accordion yahan rahega) */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <HelpCircle className="h-5 w-5 text-primary" /> Safety guidelines
-          </CardTitle>
+          <CardTitle className="text-xl">Safety Guidelines</CardTitle>
         </CardHeader>
         <CardContent>
-          <Accordion type="multiple" className="w-full">
-            <AccordionItem value="pickup">
-              <AccordionTrigger className="text-base">
-                Before pickup
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                <ul className="list-inside list-disc space-y-2">
-                  <li>
-                    Match vehicle model and registration plate shown in the app.
-                  </li>
-                  <li>
-                    Verify rider photo and rating; cancel if details don’t
-                    match.
-                  </li>
-                  <li>
-                    Prefer well‑lit pickup points and avoid secluded areas.
-                  </li>
-                </ul>
-              </AccordionContent>
+          <Accordion type="single" collapsible>
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Before the ride</AccordionTrigger>
+              <AccordionContent>Always verify the vehicle number and driver photo before boarding.</AccordionContent>
             </AccordionItem>
-
-            <AccordionItem value="during">
-              <AccordionTrigger className="text-base">
-                During the ride
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                <ul className="list-inside list-disc space-y-2">
-                  <li>
-                    Share the 4‑digit OTP only after confirming rider details.
-                  </li>
-                  <li>
-                    Wear a helmet; riders are expected to carry a spare for
-                    passengers.
-                  </li>
-                  <li>
-                    Keep valuables secure and avoid sharing personal
-                    information.
-                  </li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="after">
-              <AccordionTrigger className="text-base">
-                After the ride
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                <ul className="list-inside list-disc space-y-2">
-                  <li>
-                    Rate your experience and report any issue immediately.
-                  </li>
-                  <li>
-                    Lost and found support is available from your trip history.
-                  </li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="privacy">
-              <AccordionTrigger className="text-base">
-                Privacy and data protection
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                <ul className="list-inside list-disc space-y-2">
-                  <li>
-                    Only essential data is stored and never sold to third
-                    parties.
-                  </li>
-                  <li>
-                    Documents are used solely for verification and compliance.
-                  </li>
-                  <li>
-                    Requests to delete data can be raised from account settings.
-                  </li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="rider-standards">
-              <AccordionTrigger className="text-base">
-                Rider standards
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                <ul className="list-inside list-disc space-y-2">
-                  <li>
-                    Valid licence, RC and Aadhaar required to accept rides.
-                  </li>
-                  <li>
-                    Carry a spare ISI‑marked helmet and obey traffic rules.
-                  </li>
-                  <li>
-                    Maintain high ratings; repeated safety flags lead to
-                    suspension.
-                  </li>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
-
-            <AccordionItem value="passenger-steps">
-              <AccordionTrigger className="text-base">
-                Passenger safety steps
-              </AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">
-                <ul className="list-inside list-disc space-y-2">
-                  <li>
-                    Check plate number and rider identity before boarding.
-                  </li>
-                  <li>
-                    Confirm route in the app and share trip with a contact.
-                  </li>
-                  <li>
-                    Use in‑app messaging; avoid exchanging personal numbers.
-                  </li>
-                </ul>
-              </AccordionContent>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>During the ride</AccordionTrigger>
+              <AccordionContent>Share your trip status and keep your GPS on.</AccordionContent>
             </AccordionItem>
           </Accordion>
-        </CardContent>
-      </Card>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <MessageCircle className="h-5 w-5 text-primary" /> Support
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-muted-foreground">
-          <p>
-            If you faced any issue, contact support with your ride ID. Our team
-            prioritizes safety complaints.
-          </p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <Button asChild variant="outline">
-              <a
-                href="mailto:support@ridelink.example"
-                className="inline-flex items-center gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                Email support
-              </a>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/search" className="inline-flex items-center gap-2">
-                <Star className="h-4 w-4" />
-                View ride options
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            {auth?.role === "rider" && (
-              <Button asChild variant="outline">
-                <Link
-                  to="/login?step=rider-kyc"
-                  className="inline-flex items-center gap-2"
-                >
-                  <FileCheck2 className="h-4 w-4" />
-                  Manage KYC
-                </Link>
-              </Button>
-            )}
-          </div>
         </CardContent>
       </Card>
     </section>

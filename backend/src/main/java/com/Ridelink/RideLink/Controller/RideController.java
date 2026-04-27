@@ -58,4 +58,10 @@ public class RideController {
     public ResponseEntity<Ride> getRide(@PathVariable Long id) {
         return ResponseEntity.ok(rideService.getRideById(id));
     }
+
+    @GetMapping("/driver/{driverId}")
+    public ResponseEntity<List<Ride>> getRidesByDriver(@PathVariable Long driverId) {
+        List<Ride> rides = rideService.getRidesByDriverId(driverId);
+        return ResponseEntity.ok(rides);
+    }
 }

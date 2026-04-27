@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/bookings")
 @CrossOrigin(origins = "*")
@@ -17,8 +19,9 @@ public class BookingController {
     // 1. Ride Book Karna
     @PostMapping("/book")
     public ResponseEntity<Booking> bookRide(@RequestParam Long rideId,
-                                            @RequestParam Long passengerId) {
-        Booking booking = bookingService.bookRide(rideId, passengerId);
+                                            @RequestParam Long passengerId,
+                                            @RequestParam Integer seatsBooked) {
+        Booking booking = bookingService.bookRide(rideId, passengerId, seatsBooked);
         return ResponseEntity.ok(booking);
     }
 
@@ -35,5 +38,17 @@ public class BookingController {
     public ResponseEntity<Booking> payForBooking(@PathVariable Long bookingId) {
         Booking updatedBooking = bookingService.processPayment(bookingId);
         return ResponseEntity.ok(updatedBooking);
+    }
+
+    @GetMapping("/user/{passengerId}")
+    public ResponseEntity<List<Booking>> getBookingsByPassenger(@PathVariable Long passengerId) {
+        List<Booking> bookings = bookingService.getBookingsByPassangerId(passengerId);
+        return ResponseEntity.ok(bookings);
+    }
+
+
+    @GetMapping("/ride/{rideId}")
+    public ResponseEntity<List<Booking>> getBookingsByRideId(@PathVariable Long rideId) {
+        return ResponseEntity.ok(bookingService.getBookingsByRideId(rideId));
     }
 }

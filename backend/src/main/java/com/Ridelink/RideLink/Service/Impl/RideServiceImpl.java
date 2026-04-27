@@ -35,12 +35,33 @@ public class RideServiceImpl implements RideService {
 
     @Override
     public List<Ride> searchRides(String source, String destination, LocalDateTime departureTime) {
-        return rideRepository.findAvailableRides(source, destination, departureTime);
+        // 1. Jis din ki ride search ho rahi hai, us din ki shuruat (00:00:00)
+        LocalDateTime searchDateStart = departureTime.toLocalDate().atStartOfDay();
+
+        // 2. Us din ka khatma (23:59:59)
+        LocalDateTime searchDateEnd = departureTime.toLocalDate().atTime(23, 59, 59);
+
+        // 3. Abhi ka waqt (taaki purani rides filter ho sakein)
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        // Repository ko saare parameters bhejien jo humne Repository Interface mein likhe hain
+        return rideRepository.findAvailableRides(
+                source,
+                destination,
+                searchDateStart,
+                searchDateEnd,
+                currentTime
+        );
     }
 
     @Override
     public Ride getRideById(Long id) {
         return rideRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Ride not found with id: " + id));
+    }
+
+    @Override
+    public List<Ride> getRidesByDriverId(Long driverId) {
+        return rideRepository.findByDriverId(driverId);
     }
 }

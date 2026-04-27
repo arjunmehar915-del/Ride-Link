@@ -12,14 +12,17 @@ import java.util.List;
 @Repository
 public interface RideRepository extends JpaRepository<Ride, Long> {
 
-    @Query("SELECT r FROM Ride r WHERE r.sourceName = :source " +
-            "AND r.destinationName = :destination " +
-            "AND r.departureTime > :currentTime " +
-            "AND r.status = 'OPEN' " +
+    @Query("SELECT r FROM Ride r WHERE LOWER(r.sourceName) = LOWER(:source) " +
+            "AND LOWER(r.destinationName) = LOWER(:destination) " +
+            "AND r.departureTime >= :searchDateStart " + // User ki select ki hui date ka start
+            "AND r.departureTime <= :searchDateEnd " +   // User ki select ki hui date ka end
+            "AND r.departureTime > :currentTime " +      // Ride abhi se aage ki honi chahiye
             "AND r.availableSeats > 0")
     List<Ride> findAvailableRides(
             @Param("source") String source,
             @Param("destination") String destination,
+            @Param("searchDateStart") LocalDateTime searchDateStart,
+            @Param("searchDateEnd") LocalDateTime searchDateEnd,
             @Param("currentTime") LocalDateTime currentTime
     );
 

@@ -32,6 +32,8 @@ public class Booking {
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
 
+    private Integer seatsBooked;
+
     private String paymentId;
     private boolean isPaid;
 }

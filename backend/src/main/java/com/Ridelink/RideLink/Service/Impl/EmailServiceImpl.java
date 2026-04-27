@@ -16,7 +16,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendSimpleEmail(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("tumhara.email@gmail.com"); // Wahi email jo properties me hai
+            message.setFrom("ridelink@ecoride.com"); // Wahi email jo properties me hai (abhi ke liye dummy emai;)
             message.setTo(to);
             message.setSubject(subject);
             message.setText(body);

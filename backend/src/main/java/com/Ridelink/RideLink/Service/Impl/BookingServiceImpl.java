@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID; // <-- Ye import zaroori hai Payment ID ke liye
 
@@ -33,7 +34,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public Booking bookRide(Long rideId, Long passengerId) {
+    public Booking bookRide(Long rideId, Long passengerId, Integer seatsBooked) {
         Ride ride = rideRepository.findById(rideId)
                 .orElseThrow(() -> new ResourceNotFoundException("Ride not found"));
 
@@ -54,13 +55,14 @@ public class BookingServiceImpl implements BookingService {
         booking.setBookingTime(LocalDateTime.now());
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setPaid(false); // Default payment status false rahega
+        booking.setSeatsBooked(seatsBooked);
 
         // OTP Generate Logic (4 Digit)
         String otp = String.format("%04d", new Random().nextInt(10000));
         booking.setRideOtp(otp);
 
         // Seat Minus Logic
-        ride.setAvailableSeats(ride.getAvailableSeats() - 1);
+        ride.setAvailableSeats(ride.getAvailableSeats() - seatsBooked);
         if (ride.getAvailableSeats() == 0) {
             ride.setStatus(RideStatus.FULL);
         }
@@ -94,5 +96,15 @@ public class BookingServiceImpl implements BookingService {
         booking.setPaymentId("PAY_DEMO_" + UUID.randomUUID().toString());
 
         return bookingRepository.save(booking);
+    }
+
+    @Override
+    public List<Booking> getBookingsByPassangerId(Long passengerId){
+        return bookingRepository.findByPassengerId(passengerId);
+    }
+
+    @Override
+    public List<Booking> getBookingsByRideId(Long rideId){
+        return bookingRepository.findByRideId(rideId);
     }
 }

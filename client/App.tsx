@@ -17,6 +17,8 @@ import Search from "@/pages/Search";
 import PostRide from "@/pages/PostRide";
 import Login from "@/pages/Login";
 import Account from "@/pages/Account";
+import AdminKyc from "./pages/AdminKyc";
+
 
 const queryClient = new QueryClient();
 
@@ -44,10 +46,12 @@ const App = () => (
               path="/billing"
               element={<Placeholder title="Billing & payments" />}
             />
+            <Route path="/admin/verify" element={<AdminKyc />} />
           </Route>
           <Route path="/help" element={<Help />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
+
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

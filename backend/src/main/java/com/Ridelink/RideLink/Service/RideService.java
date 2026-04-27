@@ -8,4 +8,5 @@ public interface RideService {
     Ride createRide(Ride ride, Long driverId);
     List<Ride> searchRides(String source, String destination, LocalDateTime departureTime);
     Ride getRideById(Long id);
+    List<Ride> getRidesByDriverId(Long driverId);
 }
